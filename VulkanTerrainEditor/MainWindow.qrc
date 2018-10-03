@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/MainWindow"/>
+    <qresource prefix="/shaders">
+        <file alias="terrain.frag">shaders/terrain.frag</file>
+        <file alias="terrain.vert">shaders/terrain.vert</file>
+        <file alias="terrain.frag.spv">shaders/terrain.frag.spv</file>
+        <file alias="terrain.vert.spv">shaders/terrain.vert.spv</file>
+    </qresource>
+</RCC>
