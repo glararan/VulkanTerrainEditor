@@ -19,7 +19,6 @@ void MapTile::create(Vulkan::Manager& vkManager)
 	createVertexBuffers(vkManager);
     createUniformBuffers(vkManager);
     createDescriptorSetLayouts(vkManager);
-    createPipelineCache(vkManager);
 	createPipeline(vkManager);
     createDescriptorPool(vkManager);
     createDescriptorSets(vkManager);
@@ -159,15 +158,7 @@ void MapTile::createPipeline(Vulkan::Manager& vkManager)
 	pipelineCreateInfo.pStages = shaderStages.data();
 	pipelineCreateInfo.renderPass = vkManager.renderPass;
 
-	VK_CHECK_RESULT(vkManager.deviceFuncs->vkCreateGraphicsPipelines(vkManager.device, pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
-}
-
-void MapTile::createPipelineCache(Vulkan::Manager& vkManager)
-{
-    VkPipelineCacheCreateInfo pipelineCacheCreateInfo = {};
-    pipelineCacheCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
-
-    VK_CHECK_RESULT(vkManager.deviceFuncs->vkCreatePipelineCache(vkManager.device, &pipelineCacheCreateInfo, nullptr, &pipelineCache));
+    VK_CHECK_RESULT(vkManager.deviceFuncs->vkCreateGraphicsPipelines(vkManager.device, vkManager.pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
 void MapTile::createUniformBuffers(Vulkan::Manager& vkManager)
@@ -206,6 +197,8 @@ void MapTile::createVertexBuffers(Vulkan::Manager& vkManager)
 
 	const uint32_t w = PATCH_SIZE - 1;
     const uint32_t indexCount = w * w * 6;
+
+    model.indexCount = indexCount;
 
     QVector<uint32_t> indices;
 
@@ -260,13 +253,15 @@ void MapTile::createVertexBuffers(Vulkan::Manager& vkManager)
         verticesList.append(vertices[i].position.z());
     }
 
+    vertexBufferSize = static_cast<uint32_t>(verticesList.size()) * sizeof(float);
+
     VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBufferSize, &vertexStaging.buffer, &vertexStaging.memory, verticesList.data()));
     VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indexBufferSize, &indexStaging.buffer, &indexStaging.memory, indices.data()));
 	VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBufferSize, &model.vertices.buffer, &model.vertices.memory));
 	VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBufferSize, &model.indices.buffer, &model.indices.memory));
 
 	// Copy from staging buffers
-	VkCommandBuffer copyCommandBuffer = vkManager.createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    VkCommandBuffer copyCommandBuffer = vkManager.createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copyRegion = {};
 
@@ -278,7 +273,7 @@ void MapTile::createVertexBuffers(Vulkan::Manager& vkManager)
 
 	vkManager.deviceFuncs->vkCmdCopyBuffer(copyCommandBuffer, indexStaging.buffer, model.indices.buffer, 1, &copyRegion);
 
-	vkManager.flushCommandBuffer(copyCommandBuffer, true);
+    vkManager.flushCommandBuffer(copyCommandBuffer, true);
 
 	vkManager.deviceFuncs->vkDestroyBuffer(vkManager.device, vertexStaging.buffer, nullptr);
 	vkManager.deviceFuncs->vkFreeMemory(vkManager.device, vertexStaging.memory, nullptr);
@@ -297,7 +292,7 @@ void MapTile::destroy(Vulkan::Manager& vkManager)
 	{
 		vkManager.deviceFuncs->vkDestroyShaderModule(vkManager.device, vertexShader, nullptr);
 
-		vertexShader = VK_NULL_HANDLE;
+        vertexShader = VK_NULL_HANDLE;
 	}
 
 	if (fragmentShader)
@@ -312,13 +307,6 @@ void MapTile::destroy(Vulkan::Manager& vkManager)
 		vkManager.deviceFuncs->vkDestroyPipeline(vkManager.device, pipeline, nullptr);
 
 		pipeline = VK_NULL_HANDLE;
-	}
-
-	if (pipelineCache)
-	{
-		vkManager.deviceFuncs->vkDestroyPipelineCache(vkManager.device, pipelineCache, nullptr);
-
-		pipelineCache = VK_NULL_HANDLE;
 	}
 
 	if (pipelineLayout)
@@ -349,11 +337,11 @@ void MapTile::draw(const VkCommandBuffer commandBuffer, QVulkanDeviceFunctions* 
 
     updateUniformBuffers(camera);
 
-	VkDeviceSize offsets[1] = { 0 };
+    VkDeviceSize offset = 0;
 
 	deviceFuncs->vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	deviceFuncs->vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
-	deviceFuncs->vkCmdBindVertexBuffers(commandBuffer, VERTEX_BUFFER_BIND_ID, 1, &model.vertices.buffer, offsets);
+    deviceFuncs->vkCmdBindVertexBuffers(commandBuffer, VERTEX_BUFFER_BIND_ID, 1, &model.vertices.buffer, &offset);
 	deviceFuncs->vkCmdBindIndexBuffer(commandBuffer, model.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
     deviceFuncs->vkCmdDrawIndexed(commandBuffer, model.indexCount, 1, 0, 0, 0);
 }

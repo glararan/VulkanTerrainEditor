@@ -7,13 +7,14 @@
 
 namespace Vulkan
 {
-	Manager::Manager(MapView* mapView) : mapView(mapView)
+    Manager::Manager(MapView* mapView, VkPipelineCache vkPipelineCache) : mapView(mapView)
 	{
 		instance = mapView->vulkanInstance();
 
         device = mapView->device();
 		physicalDevice = mapView->physicalDevice();
 		renderPass = mapView->defaultRenderPass();
+        pipelineCache = vkPipelineCache;
 
         hostVisibleMemoryIndex = mapView->hostVisibleMemoryIndex();
         deviceLocalMemoryIndex = mapView->deviceLocalMemoryIndex();

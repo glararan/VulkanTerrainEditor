@@ -14,7 +14,7 @@ namespace Vulkan
 	class Manager
 	{
 	public:
-		Manager(MapView* mapView);
+        Manager(MapView* mapView, VkPipelineCache vkPipelineCache);
 
 		VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data = nullptr);
 		VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Vulkan::Buffer* buffer, VkDeviceSize size, void* data = nullptr);
@@ -32,6 +32,7 @@ namespace Vulkan
 		VkPhysicalDevice physicalDevice;
 		VkRenderPass renderPass;
 		VkPhysicalDeviceMemoryProperties memoryProperties;
+        VkPipelineCache pipelineCache;
 
 		QVulkanInstance* instance;
 		QVulkanFunctions* functions;

@@ -36,8 +36,7 @@ private:
 	void createDescriptorPool(Vulkan::Manager& vkManager);
 	void createDescriptorSetLayouts(Vulkan::Manager& vkManager);
 	void createDescriptorSets(Vulkan::Manager& vkManager);
-	void createPipeline(Vulkan::Manager& vkManager);
-    void createPipelineCache(Vulkan::Manager& vkManager);
+    void createPipeline(Vulkan::Manager& vkManager);
 	void createUniformBuffers(Vulkan::Manager& vkManager);
 	void createVertexBuffers(Vulkan::Manager& vkManager);
 
@@ -45,8 +44,7 @@ private:
 
     //MapChunk chunks[CHUNKS][CHUNKS];
 
-	VkPipeline pipeline = VK_NULL_HANDLE;
-	VkPipelineCache pipelineCache = VK_NULL_HANDLE;
+    VkPipeline pipeline = VK_NULL_HANDLE;
 	VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
 	VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;

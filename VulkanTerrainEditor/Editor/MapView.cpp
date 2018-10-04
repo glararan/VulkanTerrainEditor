@@ -32,10 +32,7 @@ void MapView::mousePressEvent(QMouseEvent* event)
 
 void MapView::mouseReleaseEvent(QMouseEvent*)
 {
-	mousePressed = false;
-
-    qDebug() << "viewMatrix: " << renderer->getCamera()->getViewMatrix();
-    qDebug() << "position: " << renderer->getCamera()->getPosition();
+    mousePressed = false;
 }
 
 void MapView::mouseMoveEvent(QMouseEvent* event)

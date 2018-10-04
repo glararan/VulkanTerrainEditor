@@ -60,7 +60,9 @@ void MapViewRenderer::initResources()
 
 	deviceFuncs = instance->deviceFunctions(device);
 
-	Vulkan::Manager vulkanManager(window);
+    createPipelines();
+
+    Vulkan::Manager vulkanManager(window, pipelineCache);
 
 	world->create(vulkanManager);
 }
@@ -71,6 +73,8 @@ void MapViewRenderer::initSwapChainResources()
 
 	const QSize size = window->swapChainImageSize();
 
+    camera.setPerspectiveProjection(60.0f, static_cast<float>(size.width()) / static_cast<float>(size.height()), 0.01f, 1024.0f);
+
     proj.perspective(45.0f, size.width() / static_cast<float>(size.height()), 0.01f, 1000.0f);
 
 	markViewProjectionDirty();
@@ -78,9 +82,16 @@ void MapViewRenderer::initSwapChainResources()
 
 void MapViewRenderer::releaseResources()
 {
-	Vulkan::Manager vulkanManager(window);
+    Vulkan::Manager vulkanManager(window, pipelineCache);
 
 	world->destroy(vulkanManager);
+
+    if (pipelineCache)
+    {
+        deviceFuncs->vkDestroyPipelineCache(vulkanManager.device, pipelineCache, nullptr);
+
+        pipelineCache = VK_NULL_HANDLE;
+    }
 }
 
 void MapViewRenderer::releaseSwapChainResources()
