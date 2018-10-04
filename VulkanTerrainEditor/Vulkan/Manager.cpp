@@ -7,8 +7,10 @@
 
 namespace Vulkan
 {
-    Manager::Manager(MapView* mapView, VkPipelineCache vkPipelineCache) : mapView(mapView)
+    void Manager::initialize(MapView* mapView, VkPipelineCache vkPipelineCache)
 	{
+        this->mapView = mapView;
+
 		instance = mapView->vulkanInstance();
 
         device = mapView->device();
@@ -24,6 +26,16 @@ namespace Vulkan
 
 		functions->vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 	}
+
+    Manager* Manager::createInstance()
+    {
+        return new Manager();
+    }
+
+    Manager* Manager::getInstance()
+    {
+        return Singleton<Manager>::instance(Manager::createInstance);
+    }
 
 	VkResult Manager::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data)
 	{
@@ -122,11 +134,11 @@ namespace Vulkan
 		return buffer->bind();
 	}
 
-	VkCommandBuffer Manager::createCommandBuffer(VkCommandBufferLevel level, bool begin)
-	{
-		VkCommandBuffer commandBuffer;
-
+    VkCommandBuffer Manager::createCommandBuffer(VkCommandBufferLevel level, bool begin, bool oneTimeUse)
+    {
 		VkCommandBufferAllocateInfo commandBufferAllocateInfo = Vulkan::Initializers::commandBufferAllocateInfo(mapView->graphicsCommandPool(), level, 1);
+
+        VkCommandBuffer commandBuffer;
 
 		VK_CHECK_RESULT(deviceFuncs->vkAllocateCommandBuffers(device, &commandBufferAllocateInfo, &commandBuffer));
 
@@ -134,6 +146,7 @@ namespace Vulkan
 		if (begin)
 		{
 			VkCommandBufferBeginInfo commandBufferBeginInfo = Vulkan::Initializers::commandBufferBeginInfo();
+            commandBufferBeginInfo.flags = oneTimeUse ? VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT : VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 
 			VK_CHECK_RESULT(deviceFuncs->vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
 		}

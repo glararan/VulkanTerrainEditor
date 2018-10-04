@@ -10,7 +10,6 @@
 
 MapViewRenderer::MapViewRenderer(MapView* parent, bool msaa) : window(parent), world(new World())
 {
-    camera.setPerspectiveProjection(60.0f, static_cast<float>(parent->width()) / static_cast<float>(window->height()), 0.1f, 512.0f);
 	camera.setMovementSpeed(7.5f);
 
 	if (msaa)
@@ -62,33 +61,25 @@ void MapViewRenderer::initResources()
 
     createPipelines();
 
-    Vulkan::Manager vulkanManager(window, pipelineCache);
+    VulkanManager->initialize(window, pipelineCache);
 
-	world->create(vulkanManager);
+    world->create();
 }
 
 void MapViewRenderer::initSwapChainResources()
 {
-	proj = window->clipCorrectionMatrix();
-
 	const QSize size = window->swapChainImageSize();
 
-    camera.setPerspectiveProjection(60.0f, static_cast<float>(size.width()) / static_cast<float>(size.height()), 0.01f, 1024.0f);
-
-    proj.perspective(45.0f, size.width() / static_cast<float>(size.height()), 0.01f, 1000.0f);
-
-	markViewProjectionDirty();
+    camera.setPerspectiveProjection(window->clipCorrectionMatrix(), 60.0f, static_cast<float>(size.width()) / static_cast<float>(size.height()), 0.01f, 1024.0f);
 }
 
 void MapViewRenderer::releaseResources()
 {
-    Vulkan::Manager vulkanManager(window, pipelineCache);
-
-	world->destroy(vulkanManager);
+    world->destroy();
 
     if (pipelineCache)
     {
-        deviceFuncs->vkDestroyPipelineCache(vulkanManager.device, pipelineCache, nullptr);
+        deviceFuncs->vkDestroyPipelineCache(VulkanManager->device, pipelineCache, nullptr);
 
         pipelineCache = VK_NULL_HANDLE;
     }
@@ -118,11 +109,6 @@ void MapViewRenderer::createPipelines()
 	VK_CHECK_RESULT(deviceFuncs->vkCreatePipelineCache(device, &pipelineCacheInfo, nullptr, &pipelineCache));
 }
 
-void MapViewRenderer::markViewProjectionDirty()
-{
-	viewProjectionDirty = window->concurrentFrameCount();
-}
-
 void MapViewRenderer::startNextFrame()
 {
 	Q_ASSERT(!framePending);
@@ -136,11 +122,7 @@ void MapViewRenderer::startNextFrame()
 
 void MapViewRenderer::renderFrame()
 {
-	QMutexLocker locker(&guiMutex);
-
-	/*ensureBuffers();
-	ensureInstanceBuffer();
-	m_pipelinesFuture.waitForFinished();*/
+    QMutexLocker locker(&guiMutex);
 
 	VkCommandBuffer commandBuffer = window->currentCommandBuffer();
 
@@ -162,10 +144,8 @@ void MapViewRenderer::renderFrame()
     rpBeginInfo.renderArea.extent.height = static_cast<uint32_t>(size.height());
 	rpBeginInfo.clearValueCount = window->sampleCountFlagBits() > VK_SAMPLE_COUNT_1_BIT ? 3 : 2;
 	rpBeginInfo.pClearValues = clearValues;
-
-	VkCommandBuffer cmdBuf = window->currentCommandBuffer();
 	
-	deviceFuncs->vkCmdBeginRenderPass(cmdBuf, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+    deviceFuncs->vkCmdBeginRenderPass(commandBuffer, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport viewport =
 	{
@@ -184,7 +164,7 @@ void MapViewRenderer::renderFrame()
 	
 	deviceFuncs->vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    world->draw(window->currentCommandBuffer(), deviceFuncs, camera);
+    world->draw(camera);
 
-	deviceFuncs->vkCmdEndRenderPass(cmdBuf);
+    deviceFuncs->vkCmdEndRenderPass(commandBuffer);
 }

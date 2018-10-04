@@ -39,7 +39,7 @@ public:
 	void setFarPlane(const float& value);
 	void setFieldOfView(const float& value);
 	void setAspectRatio(const float& value);
-	void setPerspectiveProjection(const float& FOV, const float& AR, const float& nPlane, const float& fPlane);
+    void setPerspectiveProjection(const QMatrix4x4& clipCorrectionMatrix, const float& FOV, const float& AR, const float& nPlane, const float& fPlane);
 
 	void setMovementSpeed(const float& value) { movementSpeed = value; }
 	void setRotationSpeed(const float& value) { rotationSpeed = value; }

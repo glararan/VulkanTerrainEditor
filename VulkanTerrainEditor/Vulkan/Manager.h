@@ -7,18 +7,23 @@
 
 #include "Buffer.h"
 
+#include "Common/Singleton/singleton.h"
 #include "Editor/MapView.h"
+
+#define VulkanManager Vulkan::Manager::getInstance()
 
 namespace Vulkan
 {
 	class Manager
 	{
-	public:
-        Manager(MapView* mapView, VkPipelineCache vkPipelineCache);
+    public:
+        static Manager* getInstance();
+
+        void initialize(MapView* mapView, VkPipelineCache vkPipelineCache);
 
 		VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data = nullptr);
 		VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Vulkan::Buffer* buffer, VkDeviceSize size, void* data = nullptr);
-		VkCommandBuffer createCommandBuffer(VkCommandBufferLevel level, bool begin);
+        VkCommandBuffer createCommandBuffer(VkCommandBufferLevel level, bool begin, bool oneTimeUse = false);
 		VkShaderModule createShader(const QString& name);
 
 		void flushCommandBuffer(VkCommandBuffer commandBuffer, bool free);
@@ -42,6 +47,8 @@ namespace Vulkan
         uint32_t deviceLocalMemoryIndex;
 
 	private:
+        static Manager* createInstance();
+
 		MapView* mapView;
 	};
 }

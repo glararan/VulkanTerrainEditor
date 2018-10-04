@@ -27,18 +27,18 @@ public:
 	MapTile();
 	~MapTile();
 
-	void create(Vulkan::Manager& vkManager);
-	void destroy(Vulkan::Manager& vkManager);
+    void create();
+    void destroy();
 
-    void draw(const VkCommandBuffer commandBuffer, QVulkanDeviceFunctions* deviceFuncs, const Camera& camera, const Frustum& frustum, const bool& wireframe = false, const bool& tessellation = true);
+    void draw(const Camera& camera, const Frustum& frustum, const bool& wireframe = false, const bool& tessellation = true);
 
 private:
-	void createDescriptorPool(Vulkan::Manager& vkManager);
-	void createDescriptorSetLayouts(Vulkan::Manager& vkManager);
-	void createDescriptorSets(Vulkan::Manager& vkManager);
-    void createPipeline(Vulkan::Manager& vkManager);
-	void createUniformBuffers(Vulkan::Manager& vkManager);
-	void createVertexBuffers(Vulkan::Manager& vkManager);
+    void createDescriptorPool(Vulkan::Manager* vkManager);
+    void createDescriptorSetLayouts(Vulkan::Manager* vkManager);
+    void createDescriptorSets(Vulkan::Manager* vkManager);
+    void createPipeline(Vulkan::Manager* vkManager);
+    void createUniformBuffers(Vulkan::Manager* vkManager);
+    void createVertexBuffers(Vulkan::Manager* vkManager);
 
     void updateUniformBuffers(const Camera& camera);
 

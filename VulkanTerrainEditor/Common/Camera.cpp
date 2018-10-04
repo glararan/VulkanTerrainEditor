@@ -123,14 +123,15 @@ void Camera::setAspectRatio(const float& value)
     updateProjectionMatrix();
 }
 
-void Camera::setPerspectiveProjection(const float& FOV, const float& AR, const float& nPlane, const float& fPlane)
+void Camera::setPerspectiveProjection(const QMatrix4x4& clipCorrectionMatrix, const float& FOV, const float& AR, const float& nPlane, const float& fPlane)
 {
 	fieldOfView = FOV;
 	aspectRatio = AR;
 	nearPlane = nPlane;
     farPlane = fPlane;
 
-	updateProjectionMatrix();
+    projectionMatrix = clipCorrectionMatrix;
+    projectionMatrix.perspective(fieldOfView, aspectRatio, nearPlane, farPlane);
 }
 
 void Camera::translate(const QVector3D& delta)

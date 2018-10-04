@@ -8,29 +8,29 @@ World::~World()
 {
 }
 
-void World::create(Vulkan::Manager& vkManager)
+void World::create()
 {
 	for (int x = 0; x < TILES; ++x)
 	{
 		for (int y = 0; y < TILES; ++y)
-			tiles[x][y].create(vkManager);
+            tiles[x][y].create();
 	}
 }
 
-void World::destroy(Vulkan::Manager& vkManager)
+void World::destroy()
 {
 	for (int x = 0; x < TILES; ++x)
 	{
 		for (int y = 0; y < TILES; ++y)
-			tiles[x][y].destroy(vkManager);
+            tiles[x][y].destroy();
 	}
 }
 
-void World::draw(const VkCommandBuffer commandBuffer, QVulkanDeviceFunctions* deviceFuncs, const Camera& camera)
+void World::draw(const Camera& camera)
 {
     for (int x = 0; x < TILES; ++x)
 	{
         for (int y = 0; y < TILES; ++y)
-            tiles[x][y].draw(commandBuffer, deviceFuncs, camera, frustum, wireframe, terrainTessellation);
+            tiles[x][y].draw(camera, frustum, wireframe, terrainTessellation);
 	}
 }

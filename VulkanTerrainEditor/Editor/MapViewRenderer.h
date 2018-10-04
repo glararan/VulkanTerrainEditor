@@ -34,8 +34,6 @@ public:
 private:
 	void createPipelines();
 
-	void markViewProjectionDirty();
-
 	void renderFrame();
 
 	MapView* window = Q_NULLPTR;
@@ -47,10 +45,6 @@ private:
 	Camera camera;
 
 	VkPipelineCache pipelineCache = VK_NULL_HANDLE;
-	
-	QMatrix4x4 proj;
-
-	int viewProjectionDirty = 0;
 
 	bool framePending = false;
 

@@ -23,7 +23,9 @@ HEADERS += ./Common/Camera.h \
     $$PWD/Vulkan/Buffer.h \
     $$PWD/Editor/MapViewRenderer.h \
     $$PWD/Vulkan/Manager.h \
-    $$PWD/Vulkan/Model.h
+    $$PWD/Vulkan/Model.h \
+    $$PWD/Common/Singleton/singleton.h \
+    $$PWD/Common/Singleton/callonce.h
 SOURCES += ./main.cpp \
     ./Application.cpp \
     ./Common/Camera.cpp \

@@ -14,17 +14,19 @@ MapTile::~MapTile()
 {
 }
 
-void MapTile::create(Vulkan::Manager& vkManager)
+void MapTile::create()
 {
-	createVertexBuffers(vkManager);
-    createUniformBuffers(vkManager);
-    createDescriptorSetLayouts(vkManager);
-	createPipeline(vkManager);
-    createDescriptorPool(vkManager);
-    createDescriptorSets(vkManager);
+    Vulkan::Manager* manager = VulkanManager;
+
+    createVertexBuffers(manager);
+    createUniformBuffers(manager);
+    createDescriptorSetLayouts(manager);
+    createPipeline(manager);
+    createDescriptorPool(manager);
+    createDescriptorSets(manager);
 }
 
-void MapTile::createDescriptorPool(Vulkan::Manager& vkManager)
+void MapTile::createDescriptorPool(Vulkan::Manager* vkManager)
 {
 	QVector<VkDescriptorPoolSize> poolSizes =
 	{
@@ -32,12 +34,12 @@ void MapTile::createDescriptorPool(Vulkan::Manager& vkManager)
         //Vulkan::Initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3),
 	};
 
-	VkDescriptorPoolCreateInfo descriptorPoolInfo = Vulkan::Initializers::descriptorPoolCreateInfo(static_cast<uint32_t>(poolSizes.size()), poolSizes.data(), 2);
+    VkDescriptorPoolCreateInfo descriptorPoolInfo = Vulkan::Initializers::descriptorPoolCreateInfo(static_cast<uint32_t>(poolSizes.size()), poolSizes.data(), 1);//2);
 
-	VK_CHECK_RESULT(vkManager.deviceFuncs->vkCreateDescriptorPool(vkManager.device, &descriptorPoolInfo, nullptr, &descriptorPool));
+    VK_CHECK_RESULT(vkManager->deviceFuncs->vkCreateDescriptorPool(vkManager->device, &descriptorPoolInfo, nullptr, &descriptorPool));
 }
 
-void MapTile::createDescriptorSetLayouts(Vulkan::Manager& vkManager)
+void MapTile::createDescriptorSetLayouts(Vulkan::Manager* vkManager)
 {
 	VkDescriptorSetLayoutCreateInfo descriptorLayoutCreateInfo;
 	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
@@ -58,14 +60,14 @@ void MapTile::createDescriptorSetLayouts(Vulkan::Manager& vkManager)
 
 	descriptorLayoutCreateInfo = Vulkan::Initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
 
-	VK_CHECK_RESULT(vkManager.deviceFuncs->vkCreateDescriptorSetLayout(vkManager.device, &descriptorLayoutCreateInfo, nullptr, &descriptorSetLayout));
+    VK_CHECK_RESULT(vkManager->deviceFuncs->vkCreateDescriptorSetLayout(vkManager->device, &descriptorLayoutCreateInfo, nullptr, &descriptorSetLayout));
 
 	pipelineLayoutCreateInfo = Vulkan::Initializers::pipelineLayoutCreateInfo(&descriptorSetLayout, 1);
 
-	VK_CHECK_RESULT(vkManager.deviceFuncs->vkCreatePipelineLayout(vkManager.device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
+    VK_CHECK_RESULT(vkManager->deviceFuncs->vkCreatePipelineLayout(vkManager->device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
 }
 
-void MapTile::createDescriptorSets(Vulkan::Manager& vkManager)
+void MapTile::createDescriptorSets(Vulkan::Manager* vkManager)
 {
 	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
 
@@ -73,7 +75,7 @@ void MapTile::createDescriptorSets(Vulkan::Manager& vkManager)
 
 	descriptorSetAllocateInfo = Vulkan::Initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayout, 1);
 
-	VK_CHECK_RESULT(vkManager.deviceFuncs->vkAllocateDescriptorSets(vkManager.device, &descriptorSetAllocateInfo, &descriptorSet));
+    VK_CHECK_RESULT(vkManager->deviceFuncs->vkAllocateDescriptorSets(vkManager->device, &descriptorSetAllocateInfo, &descriptorSet));
 
 	writeDescriptorSets = 
 	{
@@ -87,10 +89,10 @@ void MapTile::createDescriptorSets(Vulkan::Manager& vkManager)
 		//Vulkan::Initializers::writeDescriptorSet(descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &uniformTessellationBuffer.descriptor),
 	};
 
-	vkManager.deviceFuncs->vkUpdateDescriptorSets(vkManager.device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+    vkManager->deviceFuncs->vkUpdateDescriptorSets(vkManager->device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
 }
 
-void MapTile::createPipeline(Vulkan::Manager& vkManager)
+void MapTile::createPipeline(Vulkan::Manager* vkManager)
 {
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = Vulkan::Initializers::pipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE); // VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
 
@@ -137,13 +139,13 @@ void MapTile::createPipeline(Vulkan::Manager& vkManager)
 
     QVarLengthArray<VkPipelineShaderStageCreateInfo, 2> shaderStages(2);
 
-    vertexShader = vkManager.createShader(":/shaders/terrain.vert.spv");
-    fragmentShader = vkManager.createShader(":/shaders/terrain.frag.spv");
+    vertexShader = vkManager->createShader(":/shaders/terrain.vert.spv");
+    fragmentShader = vkManager->createShader(":/shaders/terrain.frag.spv");
 
-	shaderStages[0] = vkManager.loadShader(vertexShader, VK_SHADER_STAGE_VERTEX_BIT);
-	shaderStages[1] = vkManager.loadShader(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT);
+    shaderStages[0] = vkManager->loadShader(vertexShader, VK_SHADER_STAGE_VERTEX_BIT);
+    shaderStages[1] = vkManager->loadShader(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	VkGraphicsPipelineCreateInfo pipelineCreateInfo = Vulkan::Initializers::pipelineCreateInfo(pipelineLayout, vkManager.renderPass, 0);
+    VkGraphicsPipelineCreateInfo pipelineCreateInfo = Vulkan::Initializers::pipelineCreateInfo(pipelineLayout, vkManager->renderPass, 0);
 
 	pipelineCreateInfo.pVertexInputState = &vertexInputState;
 	pipelineCreateInfo.pInputAssemblyState = &inputAssemblyState;
@@ -153,22 +155,22 @@ void MapTile::createPipeline(Vulkan::Manager& vkManager)
 	pipelineCreateInfo.pViewportState = &viewportState;
 	pipelineCreateInfo.pDepthStencilState = &depthStencilState;
 	pipelineCreateInfo.pDynamicState = &dynamicState;
-	pipelineCreateInfo.pTessellationState = &tessellationState;
+    //pipelineCreateInfo.pTessellationState = &tessellationState;
 	pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
 	pipelineCreateInfo.pStages = shaderStages.data();
-	pipelineCreateInfo.renderPass = vkManager.renderPass;
+    pipelineCreateInfo.renderPass = vkManager->renderPass;
 
-    VK_CHECK_RESULT(vkManager.deviceFuncs->vkCreateGraphicsPipelines(vkManager.device, vkManager.pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
+    VK_CHECK_RESULT(vkManager->deviceFuncs->vkCreateGraphicsPipelines(vkManager->device, vkManager->pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
 }
 
-void MapTile::createUniformBuffers(Vulkan::Manager& vkManager)
+void MapTile::createUniformBuffers(Vulkan::Manager* vkManager)
 {
-	VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniformTessellationBuffer, sizeof(uniformTessellation)));
+    VK_CHECK_RESULT(vkManager->createBuffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &uniformTessellationBuffer, sizeof(uniformTessellation)));
 
     VK_CHECK_RESULT(uniformTessellationBuffer.map());
 }
 
-void MapTile::createVertexBuffers(Vulkan::Manager& vkManager)
+void MapTile::createVertexBuffers(Vulkan::Manager* vkManager)
 {
 #define PATCH_SIZE 64
 
@@ -255,76 +257,84 @@ void MapTile::createVertexBuffers(Vulkan::Manager& vkManager)
 
     vertexBufferSize = static_cast<uint32_t>(verticesList.size()) * sizeof(float);
 
-    VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBufferSize, &vertexStaging.buffer, &vertexStaging.memory, verticesList.data()));
-    VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indexBufferSize, &indexStaging.buffer, &indexStaging.memory, indices.data()));
-	VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBufferSize, &model.vertices.buffer, &model.vertices.memory));
-	VK_CHECK_RESULT(vkManager.createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBufferSize, &model.indices.buffer, &model.indices.memory));
+    VK_CHECK_RESULT(vkManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBufferSize, &vertexStaging.buffer, &vertexStaging.memory, verticesList.data()));
+    VK_CHECK_RESULT(vkManager->createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indexBufferSize, &indexStaging.buffer, &indexStaging.memory, indices.data()));
+    VK_CHECK_RESULT(vkManager->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBufferSize, &model.vertices.buffer, &model.vertices.memory));
+    VK_CHECK_RESULT(vkManager->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBufferSize, &model.indices.buffer, &model.indices.memory));
 
 	// Copy from staging buffers
-    VkCommandBuffer copyCommandBuffer = vkManager.createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    QVulkanDeviceFunctions* deviceFuncs = vkManager->deviceFuncs;
+
+    VkDevice device = vkManager->device;
+
+    VkCommandBuffer commandBuffer = vkManager->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copyRegion = {};
 
 	copyRegion.size = vertexBufferSize;
 
-	vkManager.deviceFuncs->vkCmdCopyBuffer(copyCommandBuffer, vertexStaging.buffer, model.vertices.buffer, 1, &copyRegion);
+    deviceFuncs->vkCmdCopyBuffer(commandBuffer, vertexStaging.buffer, model.vertices.buffer, 1, &copyRegion);
 
 	copyRegion.size = indexBufferSize;
 
-	vkManager.deviceFuncs->vkCmdCopyBuffer(copyCommandBuffer, indexStaging.buffer, model.indices.buffer, 1, &copyRegion);
+    deviceFuncs->vkCmdCopyBuffer(commandBuffer, indexStaging.buffer, model.indices.buffer, 1, &copyRegion);
 
-    vkManager.flushCommandBuffer(copyCommandBuffer, true);
+    vkManager->flushCommandBuffer(commandBuffer, true);
 
-	vkManager.deviceFuncs->vkDestroyBuffer(vkManager.device, vertexStaging.buffer, nullptr);
-	vkManager.deviceFuncs->vkFreeMemory(vkManager.device, vertexStaging.memory, nullptr);
-	vkManager.deviceFuncs->vkDestroyBuffer(vkManager.device, indexStaging.buffer, nullptr);
-	vkManager.deviceFuncs->vkFreeMemory(vkManager.device, indexStaging.memory, nullptr);
+    deviceFuncs->vkDestroyBuffer(device, vertexStaging.buffer, nullptr);
+    deviceFuncs->vkFreeMemory(device, vertexStaging.memory, nullptr);
+    deviceFuncs->vkDestroyBuffer(device, indexStaging.buffer, nullptr);
+    deviceFuncs->vkFreeMemory(device, indexStaging.memory, nullptr);
 
 	delete[] vertices;
     //delete[] indices;
 }
 
-void MapTile::destroy(Vulkan::Manager& vkManager)
+void MapTile::destroy()
 {
+    VkDevice device = VulkanManager->device;
+
+    QVulkanDeviceFunctions* deviceFuncs = VulkanManager->deviceFuncs;
+
 	uniformTessellationBuffer.destroy();
 
 	if (vertexShader)
 	{
-		vkManager.deviceFuncs->vkDestroyShaderModule(vkManager.device, vertexShader, nullptr);
+        deviceFuncs->vkDestroyShaderModule(device, vertexShader, nullptr);
 
         vertexShader = VK_NULL_HANDLE;
 	}
 
 	if (fragmentShader)
 	{
-		vkManager.deviceFuncs->vkDestroyShaderModule(vkManager.device, fragmentShader, nullptr);
+        deviceFuncs->vkDestroyShaderModule(device, fragmentShader, nullptr);
 
 		fragmentShader = VK_NULL_HANDLE;
 	}
 
 	if (pipeline)
 	{
-		vkManager.deviceFuncs->vkDestroyPipeline(vkManager.device, pipeline, nullptr);
+        deviceFuncs->vkDestroyPipeline(device, pipeline, nullptr);
 
 		pipeline = VK_NULL_HANDLE;
 	}
 
 	if (pipelineLayout)
 	{
-		vkManager.deviceFuncs->vkDestroyPipelineLayout(vkManager.device, pipelineLayout, nullptr);
+        deviceFuncs->vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 
 		pipelineLayout = VK_NULL_HANDLE;
 	}
 
 	if (descriptorSetLayout)
 	{
-		vkManager.deviceFuncs->vkDestroyDescriptorSetLayout(vkManager.device, descriptorSetLayout, nullptr);
+        deviceFuncs->vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
 		descriptorSetLayout = VK_NULL_HANDLE;
 	}
 }
 
-void MapTile::draw(const VkCommandBuffer commandBuffer, QVulkanDeviceFunctions* deviceFuncs, const Camera& camera, const Frustum& frustum, const bool& wireframe, const bool& tessellation)
+void MapTile::draw(const Camera& camera, const Frustum& frustum, const bool& wireframe, const bool& tessellation)
 {
     /*for(quint32 x = 0; x < CHUNKS; ++x)
     {
@@ -335,14 +345,18 @@ void MapTile::draw(const VkCommandBuffer commandBuffer, QVulkanDeviceFunctions* 
 	//if (!frustum.check())
 		//return;
 
+    VkCommandBuffer commandBuffer = VulkanManager->getCommandBuffer();
+
+    QVulkanDeviceFunctions* deviceFuncs = VulkanManager->deviceFuncs;
+
     updateUniformBuffers(camera);
 
     VkDeviceSize offset = 0;
 
-	deviceFuncs->vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-	deviceFuncs->vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+    deviceFuncs->vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+    deviceFuncs->vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
     deviceFuncs->vkCmdBindVertexBuffers(commandBuffer, VERTEX_BUFFER_BIND_ID, 1, &model.vertices.buffer, &offset);
-	deviceFuncs->vkCmdBindIndexBuffer(commandBuffer, model.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+    deviceFuncs->vkCmdBindIndexBuffer(commandBuffer, model.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
     deviceFuncs->vkCmdDrawIndexed(commandBuffer, model.indexCount, 1, 0, 0, 0);
 }
 

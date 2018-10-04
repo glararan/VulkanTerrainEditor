@@ -17,10 +17,10 @@ public:
 	World();
 	~World();
 
-	void create(Vulkan::Manager& vkManager);
-	void destroy(Vulkan::Manager& vkManager);
+    void create();
+    void destroy();
 
-    void draw(const VkCommandBuffer commandBuffer, QVulkanDeviceFunctions* deviceFuncs, const Camera& camera);
+    void draw(const Camera& camera);
 
 	bool getWireframe() const { return wireframe; }
 
