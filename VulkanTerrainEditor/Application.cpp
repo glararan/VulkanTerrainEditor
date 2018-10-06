@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include <QLoggingCategory>
+#include <QTime>
 
 #include "Version.h"
 
@@ -16,6 +17,8 @@ Application::Application(int& argc, char** arg) : QApplication(argc, arg)
 	setOrganizationName(QString(VER_COMPANYNAME_STR));
 	setApplicationName(QString(VER_PRODUCTNAME_STR));
 	setApplicationVersion(QString(VER_FILEVERSION_STR));
+
+    qsrand(QTime(0, 0, 0).secsTo(QTime::currentTime()));
 	
 	vulkanInstance = new QVulkanInstance();
 	vulkanInstance->setLayers(QByteArrayList()
