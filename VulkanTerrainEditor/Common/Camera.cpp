@@ -181,12 +181,16 @@ void Camera::strafe(const float& amount)
 {
     position[0] += amount * viewCenter.x();
     position[2] += amount * viewCenter.z();
+
+    updateViewMatrix();
 }
 
 void Camera::walk(const float& amount)
 {
     position[0] += amount * toCenter.x();
     position[2] += amount * toCenter.z();
+
+    updateViewMatrix();
 }
 
 void Camera::updateProjectionMatrix()
