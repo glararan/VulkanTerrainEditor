@@ -360,13 +360,5 @@ void MapTile::updateUniformBuffers(const Camera& camera)
 {
     uniformTessellation.mvp = camera.getViewProjectionMatrix() * terrainModel;
 
-    QVulkanDeviceFunctions* deviceFuncs = VulkanManager->deviceFuncs;
-
-    void* data;
-
-    deviceFuncs->vkMapMemory(uniformTessellationBuffer.device, uniformTessellationBuffer.memory, 0, 64, 0, &data);
-
-    memcpy(data, uniformTessellation.mvp.constData(), 64);
-
-    deviceFuncs->vkUnmapMemory(uniformTessellationBuffer.device, uniformTessellationBuffer.memory);
+    memcpy(uniformTessellationBuffer.mapped, uniformTessellation.mvp.constData(), 64);
 }
