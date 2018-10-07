@@ -35,7 +35,7 @@ MapViewRenderer::MapViewRenderer(MapView* parent, bool msaa) : window(parent), w
 	{
 		if (framePending)
 		{
-			framePending = false;
+            framePending = false;
 
 			window->frameReady();
 			window->requestUpdate();

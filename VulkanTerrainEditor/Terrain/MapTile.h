@@ -10,6 +10,7 @@
 #include "Editor/MapViewRenderer.h"
 
 #include "Common/Frustum.h"
+#include "Common/Shader.h"
 #include "Vulkan/Manager.h"
 #include "Vulkan/Model.h"
 #include "Vulkan/Buffer.h"
@@ -50,8 +51,8 @@ private:
 	VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
 	VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
 
-	VkShaderModule vertexShader = VK_NULL_HANDLE;
-	VkShaderModule fragmentShader = VK_NULL_HANDLE;
+    Shader vertexShader;
+    Shader fragmentShader;
 
 	Vulkan::Model model;
 
@@ -62,6 +63,8 @@ private:
 			//Vulkan::VERTEX_COMPONENT_UV
 		}
 	);
+
+    QMatrix4x4 terrainModel;
 
 	struct
 	{

@@ -16,3 +16,9 @@ target.path = $$OUT_PWD
 INSTALLS += target
 
 include(Vulkan Terrain Editor.pri)
+
+HEADERS += \
+    Common/Shader.h
+
+SOURCES += \
+    Common/Shader.cpp

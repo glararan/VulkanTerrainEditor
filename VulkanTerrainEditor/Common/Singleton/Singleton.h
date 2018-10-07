@@ -1,7 +1,7 @@
 #ifndef SINGLETON_H
 #define SINGLETON_H
 
-#include "callonce.h"
+#include "CallOnce.h"
 
 #include <QtGlobal>
 #include <QScopedPointer>

@@ -7,7 +7,7 @@
 
 #include "Buffer.h"
 
-#include "Common/Singleton/singleton.h"
+#include "Common/Singleton/Singleton.h"
 #include "Editor/MapView.h"
 
 #define VulkanManager Vulkan::Manager::getInstance()
@@ -30,6 +30,7 @@ namespace Vulkan
 
 		VkCommandBuffer getCommandBuffer() const { return mapView->currentCommandBuffer(); }
 		uint32_t getMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr);
+        VkSampleCountFlagBits getSampleCountFlagBits() const { return mapView->sampleCountFlagBits(); }
 
 		VkPipelineShaderStageCreateInfo loadShader(VkShaderModule& shader, VkShaderStageFlagBits stage);
 

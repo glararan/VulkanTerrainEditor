@@ -10,7 +10,11 @@ MainWindow::MainWindow(QVulkanInstance* vulkanInstance, QWidget* parent) : QMain
 	mapView = new MapView();
     mapView->setVulkanInstance(vulkanInstance);
 
-	setCentralWidget(QWidget::createWindowContainer((QWindow*)mapView));
+    QWidget* wrapper = QWidget::createWindowContainer((QWindow*)mapView);
+    wrapper->setFocusPolicy(Qt::StrongFocus);
+    wrapper->setFocus();
+
+    setCentralWidget(wrapper);
 
     connect(mapView, &MapView::cameraChanged, this, &MainWindow::updateStatusBar);
 }

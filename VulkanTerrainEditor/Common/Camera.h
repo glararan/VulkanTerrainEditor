@@ -60,8 +60,8 @@ private:
 	float movementSpeed = 1.0f;
 	float rotationSpeed = 1.0f;
 
-    QVector3D position = QVector3D(64.0f, 1.0f, 64.0f);
-    QVector3D viewCenter = QVector3D(0.0f, 0.0f, 0.0f); // right
+    QVector3D position = QVector3D(0.0f, 0.0f, 20.0f);
+    QVector3D viewCenter = QVector3D(1.0f, 0.0f, 0.0f); // right
     QVector3D toCenter = QVector3D(0.0f, 0.0f, -1.0f); // forward
 	QVector3D up = QVector3D(0.0f, 1.0f, 0.0f);
 

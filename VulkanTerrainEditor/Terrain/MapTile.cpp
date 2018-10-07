@@ -5,10 +5,12 @@
 
 #include <QCoreApplication>
 
+#define ARRAY_LENGTH(x) ((sizeof(x) / sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+
 MapTile::MapTile()
 {
+    terrainModel.rotate(-90, 1, 0, 0);
 }
-
 
 MapTile::~MapTile()
 {
@@ -28,25 +30,20 @@ void MapTile::create()
 
 void MapTile::createDescriptorPool(Vulkan::Manager* vkManager)
 {
-	QVector<VkDescriptorPoolSize> poolSizes =
+    VkDescriptorPoolSize poolSizes[] =
 	{
         Vulkan::Initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
         //Vulkan::Initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3),
 	};
 
-    VkDescriptorPoolCreateInfo descriptorPoolInfo = Vulkan::Initializers::descriptorPoolCreateInfo(static_cast<uint32_t>(poolSizes.size()), poolSizes.data(), 1);//2);
+    VkDescriptorPoolCreateInfo descriptorPoolInfo = Vulkan::Initializers::descriptorPoolCreateInfo(ARRAY_LENGTH(poolSizes), poolSizes, 2);
 
     VK_CHECK_RESULT(vkManager->deviceFuncs->vkCreateDescriptorPool(vkManager->device, &descriptorPoolInfo, nullptr, &descriptorPool));
 }
 
 void MapTile::createDescriptorSetLayouts(Vulkan::Manager* vkManager)
 {
-	VkDescriptorSetLayoutCreateInfo descriptorLayoutCreateInfo;
-	VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
-
-	QVector<VkDescriptorSetLayoutBinding> setLayoutBindings;
-
-	setLayoutBindings =
+    VkDescriptorSetLayoutBinding setLayoutBindings[] =
     {
         // Binding 0 : Vertex shader uniform buffer object
         Vulkan::Initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
@@ -58,26 +55,22 @@ void MapTile::createDescriptorSetLayouts(Vulkan::Manager* vkManager)
         //Vulkan::Initializers::descriptorSetLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
 	};
 
-	descriptorLayoutCreateInfo = Vulkan::Initializers::descriptorSetLayoutCreateInfo(setLayoutBindings.data(), static_cast<uint32_t>(setLayoutBindings.size()));
+    VkDescriptorSetLayoutCreateInfo descriptorLayoutCreateInfo = Vulkan::Initializers::descriptorSetLayoutCreateInfo(setLayoutBindings, ARRAY_LENGTH(setLayoutBindings));
 
     VK_CHECK_RESULT(vkManager->deviceFuncs->vkCreateDescriptorSetLayout(vkManager->device, &descriptorLayoutCreateInfo, nullptr, &descriptorSetLayout));
 
-	pipelineLayoutCreateInfo = Vulkan::Initializers::pipelineLayoutCreateInfo(&descriptorSetLayout, 1);
+    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = Vulkan::Initializers::pipelineLayoutCreateInfo(&descriptorSetLayout, 1);
 
     VK_CHECK_RESULT(vkManager->deviceFuncs->vkCreatePipelineLayout(vkManager->device, &pipelineLayoutCreateInfo, nullptr, &pipelineLayout));
 }
 
 void MapTile::createDescriptorSets(Vulkan::Manager* vkManager)
 {
-	VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
-
-	QVector<VkWriteDescriptorSet> writeDescriptorSets;
-
-	descriptorSetAllocateInfo = Vulkan::Initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayout, 1);
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo = Vulkan::Initializers::descriptorSetAllocateInfo(descriptorPool, &descriptorSetLayout, 1);
 
     VK_CHECK_RESULT(vkManager->deviceFuncs->vkAllocateDescriptorSets(vkManager->device, &descriptorSetAllocateInfo, &descriptorSet));
 
-	writeDescriptorSets = 
+    VkWriteDescriptorSet writeDescriptorSets[] =
 	{
         // Binding 0 : Shared shader uniform buffer object
         Vulkan::Initializers::writeDescriptorSet(descriptorSet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniformTessellationBuffer.descriptor),
@@ -89,42 +82,39 @@ void MapTile::createDescriptorSets(Vulkan::Manager* vkManager)
 		//Vulkan::Initializers::writeDescriptorSet(descriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &uniformTessellationBuffer.descriptor),
 	};
 
-    vkManager->deviceFuncs->vkUpdateDescriptorSets(vkManager->device, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
+    vkManager->deviceFuncs->vkUpdateDescriptorSets(vkManager->device, ARRAY_LENGTH(writeDescriptorSets), writeDescriptorSets, 0, NULL);
 }
 
 void MapTile::createPipeline(Vulkan::Manager* vkManager)
 {
+    VkDynamicState dynamicStateEnables[] =
+    {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+        //VK_DYNAMIC_STATE_LINE_WIDTH
+    };
+
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyState = Vulkan::Initializers::pipelineInputAssemblyStateCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE); // VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
-
-	VkPipelineRasterizationStateCreateInfo rasterizationState = Vulkan::Initializers::pipelineRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
-
-	VkPipelineColorBlendAttachmentState blendAttachmentState = Vulkan::Initializers::pipelineColorBlendAttachmentState(0xf, VK_FALSE);
+    VkPipelineRasterizationStateCreateInfo rasterizationState = Vulkan::Initializers::pipelineRasterizationStateCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
+    VkPipelineColorBlendAttachmentState blendAttachmentState = Vulkan::Initializers::pipelineColorBlendAttachmentState(0xF, VK_FALSE);
 	VkPipelineColorBlendStateCreateInfo colorBlendState = Vulkan::Initializers::pipelineColorBlendStateCreateInfo(1, &blendAttachmentState);
 	VkPipelineDepthStencilStateCreateInfo depthStencilState = Vulkan::Initializers::pipelineDepthStencilStateCreateInfo(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
 	VkPipelineViewportStateCreateInfo viewportState = Vulkan::Initializers::pipelineViewportStateCreateInfo(1, 1, 0);
-	VkPipelineMultisampleStateCreateInfo multisampleState = Vulkan::Initializers::pipelineMultisampleStateCreateInfo(VK_SAMPLE_COUNT_1_BIT, 0);
-
-	QVector<VkDynamicState> dynamicStateEnables =
-	{
-		VK_DYNAMIC_STATE_VIEWPORT,
-		VK_DYNAMIC_STATE_SCISSOR,
-		VK_DYNAMIC_STATE_LINE_WIDTH
-	};
-
-	VkPipelineDynamicStateCreateInfo dynamicState = Vulkan::Initializers::pipelineDynamicStateCreateInfo(dynamicStateEnables.data(), static_cast<uint32_t>(dynamicStateEnables.size()), 0);
+    VkPipelineMultisampleStateCreateInfo multisampleState = Vulkan::Initializers::pipelineMultisampleStateCreateInfo(vkManager->getSampleCountFlagBits());
+    VkPipelineDynamicStateCreateInfo dynamicState = Vulkan::Initializers::pipelineDynamicStateCreateInfo(dynamicStateEnables, ARRAY_LENGTH(dynamicStateEnables));
 
 	// We render the terrain as a grid of quad patches
 	VkPipelineTessellationStateCreateInfo tessellationState = Vulkan::Initializers::pipelineTessellationStateCreateInfo(4);
 
 	// Vertex bindings an attributes
 	// Binding description
-	QVector<VkVertexInputBindingDescription> vertexInputBindings =
+    VkVertexInputBindingDescription vertexInputBindings[] =
 	{
 		Vulkan::Initializers::vertexInputBindingDescription(0, vertexLayout.stride(), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 
 	// Attribute descriptions
-	QVector<VkVertexInputAttributeDescription> vertexInputAttributes =
+    VkVertexInputAttributeDescription vertexInputAttributes[] =
 	{
 		Vulkan::Initializers::vertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),					// Position
 		//Vulkan::Initializers::vertexInputAttributeDescription(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),	// Normal
@@ -132,18 +122,24 @@ void MapTile::createPipeline(Vulkan::Manager* vkManager)
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertexInputState = Vulkan::Initializers::pipelineVertexInputStateCreateInfo();
-	vertexInputState.vertexBindingDescriptionCount = static_cast<uint32_t>(vertexInputBindings.size());
-	vertexInputState.pVertexBindingDescriptions = vertexInputBindings.data();
-	vertexInputState.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexInputAttributes.size());
-	vertexInputState.pVertexAttributeDescriptions = vertexInputAttributes.data();
+    vertexInputState.flags = 0;
+    vertexInputState.pNext = nullptr;
+    vertexInputState.vertexBindingDescriptionCount = ARRAY_LENGTH(vertexInputBindings);
+    vertexInputState.pVertexBindingDescriptions = vertexInputBindings;
+    vertexInputState.vertexAttributeDescriptionCount = ARRAY_LENGTH(vertexInputAttributes);
+    vertexInputState.pVertexAttributeDescriptions = vertexInputAttributes;
 
-    QVarLengthArray<VkPipelineShaderStageCreateInfo, 2> shaderStages(2);
+    if(!vertexShader.isValid())
+        vertexShader.load(":/shaders/terrain.vert.spv");
 
-    vertexShader = vkManager->createShader(":/shaders/terrain.vert.spv");
-    fragmentShader = vkManager->createShader(":/shaders/terrain.frag.spv");
+    if(!fragmentShader.isValid())
+        fragmentShader.load(":/shaders/terrain.frag.spv");
 
-    shaderStages[0] = vkManager->loadShader(vertexShader, VK_SHADER_STAGE_VERTEX_BIT);
-    shaderStages[1] = vkManager->loadShader(fragmentShader, VK_SHADER_STAGE_FRAGMENT_BIT);
+    VkPipelineShaderStageCreateInfo shaderStages[] =
+    {
+        vkManager->loadShader(vertexShader.data()->shaderModule, VK_SHADER_STAGE_VERTEX_BIT),
+        vkManager->loadShader(fragmentShader.data()->shaderModule, VK_SHADER_STAGE_FRAGMENT_BIT)
+    };
 
     VkGraphicsPipelineCreateInfo pipelineCreateInfo = Vulkan::Initializers::pipelineCreateInfo(pipelineLayout, vkManager->renderPass, 0);
 
@@ -156,8 +152,8 @@ void MapTile::createPipeline(Vulkan::Manager* vkManager)
 	pipelineCreateInfo.pDepthStencilState = &depthStencilState;
 	pipelineCreateInfo.pDynamicState = &dynamicState;
     //pipelineCreateInfo.pTessellationState = &tessellationState;
-	pipelineCreateInfo.stageCount = static_cast<uint32_t>(shaderStages.size());
-	pipelineCreateInfo.pStages = shaderStages.data();
+    pipelineCreateInfo.stageCount = ARRAY_LENGTH(shaderStages);
+    pipelineCreateInfo.pStages = shaderStages;
     pipelineCreateInfo.renderPass = vkManager->renderPass;
 
     VK_CHECK_RESULT(vkManager->deviceFuncs->vkCreateGraphicsPipelines(vkManager->device, vkManager->pipelineCache, 1, &pipelineCreateInfo, nullptr, &pipeline));
@@ -298,18 +294,18 @@ void MapTile::destroy()
 
 	uniformTessellationBuffer.destroy();
 
-	if (vertexShader)
+    if (vertexShader.isValid())
 	{
-        deviceFuncs->vkDestroyShaderModule(device, vertexShader, nullptr);
+        deviceFuncs->vkDestroyShaderModule(device, vertexShader.data()->shaderModule, nullptr);
 
-        vertexShader = VK_NULL_HANDLE;
+        vertexShader.reset();
 	}
 
-	if (fragmentShader)
+    if (fragmentShader.isValid())
 	{
-        deviceFuncs->vkDestroyShaderModule(device, fragmentShader, nullptr);
+        deviceFuncs->vkDestroyShaderModule(device, fragmentShader.data()->shaderModule, nullptr);
 
-		fragmentShader = VK_NULL_HANDLE;
+        fragmentShader.reset();
 	}
 
 	if (pipeline)
@@ -362,10 +358,15 @@ void MapTile::draw(const Camera& camera, const Frustum& frustum, const bool& wir
 
 void MapTile::updateUniformBuffers(const Camera& camera)
 {
-    QMatrix4x4 model;
-    model.setToIdentity();
+    uniformTessellation.mvp = camera.getViewProjectionMatrix() * terrainModel;
 
-    uniformTessellation.mvp = camera.getViewProjectionMatrix() * model;
+    QVulkanDeviceFunctions* deviceFuncs = VulkanManager->deviceFuncs;
 
-    memcpy(uniformTessellationBuffer.mapped, uniformTessellation.mvp.constData(), 4 * 4 * sizeof(float));
+    void* data;
+
+    deviceFuncs->vkMapMemory(uniformTessellationBuffer.device, uniformTessellationBuffer.memory, 0, 64, 0, &data);
+
+    memcpy(data, uniformTessellation.mvp.constData(), 64);
+
+    deviceFuncs->vkUnmapMemory(uniformTessellationBuffer.device, uniformTessellationBuffer.memory);
 }
