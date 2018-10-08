@@ -36,6 +36,8 @@ namespace Vulkan
 
 		VkDevice device;
 		VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceFeatures deviceFeatures;
+        VkPhysicalDeviceProperties deviceProperties;
 		VkRenderPass renderPass;
 		VkPhysicalDeviceMemoryProperties memoryProperties;
         VkPipelineCache pipelineCache;
@@ -46,6 +48,8 @@ namespace Vulkan
 
         uint32_t hostVisibleMemoryIndex;
         uint32_t deviceLocalMemoryIndex;
+
+        QSize viewportSize;
 
 	private:
         static Manager* createInstance();

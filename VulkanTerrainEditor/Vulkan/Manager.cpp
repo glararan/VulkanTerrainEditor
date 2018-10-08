@@ -24,6 +24,8 @@ namespace Vulkan
         functions = instance->functions();
         deviceFuncs = instance->deviceFunctions(device);
 
+        functions->vkGetPhysicalDeviceFeatures(physicalDevice, &deviceFeatures);
+        functions->vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
 		functions->vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
 	}
 

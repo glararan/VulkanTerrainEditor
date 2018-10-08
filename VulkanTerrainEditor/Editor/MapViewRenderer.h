@@ -50,7 +50,7 @@ private:
 
 	QFutureWatcher<void> frameWatcher;
 
-	QMutex guiMutex;
+    QMutex guiMutex;
 };
 
 #endif // MAP_VIEW_RENDERER_H

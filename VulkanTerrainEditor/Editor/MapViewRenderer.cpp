@@ -12,7 +12,7 @@ MapViewRenderer::MapViewRenderer(MapView* parent, bool msaa) : window(parent), w
 {
 	camera.setMovementSpeed(7.5f);
 
-	if (msaa)
+    /*if (msaa)
 	{
 		const QVector<int> counts = window->supportedSampleCounts();
 
@@ -29,7 +29,7 @@ MapViewRenderer::MapViewRenderer(MapView* parent, bool msaa) : window(parent), w
 				break;
 			}
 		}
-	}
+    }*/
 
 	QObject::connect(&frameWatcher, &QFutureWatcherBase::finished, [this]
 	{
@@ -52,10 +52,7 @@ void MapViewRenderer::initResources()
 {
 	QVulkanInstance* instance = window->vulkanInstance();
 
-	VkDevice device = window->device();
-
-	const VkPhysicalDeviceLimits* physicalDeviceLimits = &window->physicalDeviceProperties()->limits;
-	const VkDeviceSize uniformAlign = physicalDeviceLimits->minUniformBufferOffsetAlignment;
+    VkDevice device = window->device();
 
 	deviceFuncs = instance->deviceFunctions(device);
 
@@ -70,7 +67,7 @@ void MapViewRenderer::initSwapChainResources()
 {
 	const QSize size = window->swapChainImageSize();
 
-    camera.setPerspectiveProjection(window->clipCorrectionMatrix(), 60.0f, static_cast<float>(size.width()) / static_cast<float>(size.height()), 0.01f, 1024.0f);
+    camera.setPerspectiveProjection(60.0f, static_cast<float>(size.width()) / static_cast<float>(size.height()), 0.01f, 1024.0f);
 }
 
 void MapViewRenderer::releaseResources()
@@ -128,39 +125,36 @@ void MapViewRenderer::renderFrame()
 
 	const QSize size = window->swapChainImageSize();
 
+    VulkanManager->viewportSize = size;
+
 	VkClearColorValue clearColor = { { 0.67f, 0.84f, 0.9f, 1.0f } };
 	VkClearDepthStencilValue clearDS = { 1, 0 };
-	VkClearValue clearValues[3];
+
+    VkClearValue clearValues[2];
+    clearValues[0].color = clearColor;
+    clearValues[1].depthStencil = clearDS;
+    /*VkClearValue clearValues[3];
 
 	memset(clearValues, 0, sizeof(clearValues));
 
 	clearValues[0].color = clearValues[2].color = clearColor;
-	clearValues[1].depthStencil = clearDS;
+    clearValues[1].depthStencil = clearDS;*/
 	
 	VkRenderPassBeginInfo rpBeginInfo = Vulkan::Initializers::renderPassBeginInfo();
 	rpBeginInfo.renderPass = window->defaultRenderPass();
 	rpBeginInfo.framebuffer = window->currentFramebuffer();
     rpBeginInfo.renderArea.extent.width = static_cast<uint32_t>(size.width());
     rpBeginInfo.renderArea.extent.height = static_cast<uint32_t>(size.height());
-	rpBeginInfo.clearValueCount = window->sampleCountFlagBits() > VK_SAMPLE_COUNT_1_BIT ? 3 : 2;
+    rpBeginInfo.clearValueCount = 2;//window->sampleCountFlagBits() > VK_SAMPLE_COUNT_1_BIT ? 3 : 2;
 	rpBeginInfo.pClearValues = clearValues;
 	
     deviceFuncs->vkCmdBeginRenderPass(commandBuffer, &rpBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	VkViewport viewport =
-	{
-		0, 0,
-		float(size.width()), float(size.height()),
-		0, 1
-	};
+    VkViewport viewport = Vulkan::Initializers::viewport(float(size.width()), float(size.height()), 0.0f, 1.0f);
 	
 	deviceFuncs->vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
-	VkRect2D scissor =
-	{
-		{ 0, 0 },
-		{ uint32_t(size.width()), uint32_t(size.height()) }
-	};
+    VkRect2D scissor = Vulkan::Initializers::rect2D(uint32_t(size.width()), uint32_t(size.height()), 0, 0);
 	
 	deviceFuncs->vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 

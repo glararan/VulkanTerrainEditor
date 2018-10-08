@@ -4,17 +4,17 @@
 #include <QVulkanFunctions>
 #include <QFile>
 
+#include "Glm.h"
+
 #include "Vulkan/Manager.h"
 
 class Texture
 {
 public:
-    Texture(Vulkan::Manager& vkManager);
+    Texture();
 	~Texture(); // Release all Vulkan resources held by this texture
 
 	void updateDescriptor(); // Update image descriptor from current sampler, view and image layout
-
-	Vulkan::Manager vulkanManager;
 
     VkFormat format;
 
@@ -47,7 +47,7 @@ public:
 	* @param (Optional) forceLinear Force linear tiling (not advised, defaults to false)
 	*
 	*/
-    bool loadFromFile(const QString& filename, VkQueue copyQueue, VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT, VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, bool forceLinear = false, bool srgb = true);
+    bool loadFromFile(const QString& filename, VkFormat format, VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT, VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, bool forceLinear = false, bool srgb = true);
 
 	/**
 	* Creates a 2D texture from a buffer
@@ -64,17 +64,12 @@ public:
 	* @param (Optional) imageLayout Usage layout for the texture (defaults VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 	*/
     bool fromBuffer(void* buffer, VkDeviceSize bufferSize, VkFormat vkFormat, const QSize& size, VkQueue copyQueue, VkFilter filter = VK_FILTER_LINEAR, VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT, VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-
-private:
-    bool createTextureImage(VkImageTiling tiling, VkImageUsageFlags usage, uint32_t memoryIndex);
-
-    bool writeLinearImage(const QImage& img);
 };
 
-/*class Texture2DArray : public Texture
+class Texture2DArray : public Texture
 {
 public:
-    /
+    /*
 	* Load a 2D texture array including all mip levels
 	*
 	* @param filename File to load (supports .ktx and .dds)
@@ -83,12 +78,12 @@ public:
 	* @param copyQueue Queue used for the texture staging copy commands (must support transfer)
 	* @param (Optional) imageUsageFlags Usage flags for the texture's image (defaults to VK_IMAGE_USAGE_SAMPLED_BIT)
 	* @param (Optional) imageLayout Usage layout for the texture (defaults VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
-	*
+    */
 
-    void loadFromFile(const QString& filename, VkFormat format, Vulkan::VulkanDevice* device, VkQueue copyQueue, VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT, VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    void loadFromFile(const QString& filename, VkFormat format, VkImageUsageFlags imageUsageFlags = VK_IMAGE_USAGE_SAMPLED_BIT, VkImageLayout imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 };
 
-class TextureCubeMap : public Texture
+/*class TextureCubeMap : public Texture
 {
 public:
 
