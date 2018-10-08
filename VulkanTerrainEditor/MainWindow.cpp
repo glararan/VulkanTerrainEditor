@@ -29,8 +29,8 @@ void MainWindow::updateStatusBar()
 {
     Camera* camera = mapView->getRenderer()->getCamera();
 
-    QVector3D position = camera->getPosition();
-    QVector3D rotation = camera->getRotation();
+    glm::vec3 position = camera->getPosition();
+    glm::vec3 rotation = camera->getRotation();
 
-    statusBar()->showMessage(QString("Camera (%1, %2, %3), Rotation (%4, %5, %6)").arg(position.x()).arg(position.y()).arg(position.z()).arg(rotation.x()).arg(rotation.y()).arg(rotation.z()));
+    statusBar()->showMessage(QString("Camera (%1, %2, %3), Rotation (%4, %5, %6)").arg(position.x).arg(position.y).arg(position.z).arg(rotation.x).arg(rotation.y).arg(rotation.z));
 }
