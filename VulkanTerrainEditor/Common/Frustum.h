@@ -6,6 +6,8 @@
 #include <QVector4D>
 #include <QMatrix4x4>
 
+#include "Glm.h"
+
 class Frustum
 {
 public:
@@ -19,13 +21,15 @@ public:
         Front  = 5
     };
 
-    bool check(const QVector3D& min, const QVector3D& max) const;
-    bool checkSphere(const QVector3D& position, const float& radius) const;
+    bool check(const glm::vec3& min, const glm::vec3& max) const;
+    bool checkSphere(const glm::vec3& position, const float& radius) const;
 
-    void update(const QMatrix4x4& matrix);
+    void update(const glm::mat4x4& matrix);
+
+    glm::vec4 getPlane(const int index) const;
 
 private:
-    QVarLengthArray<QVector4D, 6> planes;
+    QVarLengthArray<glm::vec4, 6> planes;
 };
 
 #endif // FRUSTUM_H
