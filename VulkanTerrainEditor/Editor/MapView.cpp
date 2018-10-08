@@ -43,11 +43,8 @@ void MapView::mouseMoveEvent(QMouseEvent* event)
 	int dx = event->pos().x() - lastMousePosition.x();
 	int dy = event->pos().y() - lastMousePosition.y();
 
-	if (dy)
-        renderer->getCamera()->pitch(dy / 10.0f);
-
-	if (dx)
-		renderer->getCamera()->yaw(dx / 10.0f);
+    if(dx || dy)
+        renderer->getCamera()->rotate(glm::vec3(dy, -dx, 0.0f));
 
     emit cameraChanged();
 

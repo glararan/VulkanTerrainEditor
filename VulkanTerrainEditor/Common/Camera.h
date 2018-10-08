@@ -7,6 +7,8 @@
 #include <QMatrix4x4>
 #include <QQuaternion>
 
+#include "Glm.h"
+
 class Camera
 {
 public:
@@ -16,35 +18,35 @@ public:
 	float getMovementSpeed() const { return movementSpeed; }
 	float getRotationSpeed() const { return rotationSpeed; }
 
-	QVector3D getPosition() const { return position; }
-    QVector3D getRotation() const { return rotation; }
+    glm::vec3 getPosition() const { return position; }
+    glm::vec3 getRotation() const { return rotation; }
 
-	QMatrix4x4 getProjectionMatrix() const { return projectionMatrix; }
-	QMatrix4x4 getViewProjectionMatrix() const { return projectionMatrix * viewMatrix; }
-    QMatrix4x4 getViewMatrix() const { return viewMatrix; }
+    glm::mat4x4 getProjectionMatrix() const { return projectionMatrix; }
+    glm::mat4x4 getViewProjectionMatrix() const { return projectionMatrix * viewMatrix; }
+    glm::mat4x4 getViewMatrix() const { return viewMatrix; }
 
-	void move(const QVector3D& pos);
+    void move(const glm::vec3& pos);
 
-	void rotate(const QQuaternion& quaternion);
+    void rotate(const glm::vec3& delta);
 
-    void yaw(const float& angle);
+    /*void yaw(const float& angle);
     void pitch(const float& angle);
 	void roll(const float& angle);
 
     QQuaternion yawRotation(const float& angle) const;
     QQuaternion pitchRotation(const float& angle) const;
-    QQuaternion rollRotation(const float& angle) const;
+    QQuaternion rollRotation(const float& angle) const;*/
 
 	void setNearPlane(const float& value);
 	void setFarPlane(const float& value);
 	void setFieldOfView(const float& value);
 	void setAspectRatio(const float& value);
-    void setPerspectiveProjection(const QMatrix4x4& clipCorrectionMatrix, const float& FOV, const float& AR, const float& nPlane, const float& fPlane);
+    void setPerspectiveProjection(const float& FOV, const float& AR, const float& nPlane, const float& fPlane);
 
 	void setMovementSpeed(const float& value) { movementSpeed = value; }
 	void setRotationSpeed(const float& value) { rotationSpeed = value; }
 
-    void translate(const QVector3D& delta);
+    void translate(const glm::vec3& delta);
 
     void strafe(const float& amount);
     void walk(const float& amount);
@@ -55,22 +57,22 @@ private:
 	float fieldOfView = 60.0f;
 	float aspectRatio = 1.0f;
 
-    QVector3D rotation = QVector3D(); // x = yaw, y = pitch, z = roll
+    glm::vec3 rotation = glm::vec3(); // x = yaw, y = pitch, z = roll
 
 	float movementSpeed = 1.0f;
 	float rotationSpeed = 1.0f;
 
-    QVector3D position = QVector3D(0.0f, 0.0f, 20.0f);
-    QVector3D viewCenter = QVector3D(1.0f, 0.0f, 0.0f); // right
-    QVector3D toCenter = QVector3D(0.0f, 0.0f, -1.0f); // forward
-	QVector3D up = QVector3D(0.0f, 1.0f, 0.0f);
+    glm::vec3 position = glm::vec3(0.0f, 0.0f, 20.0f);
+    glm::vec3 viewCenter = glm::vec3(1.0f, 0.0f, 0.0f); // right
+    glm::vec3 toCenter = glm::vec3(0.0f, 0.0f, -1.0f); // forward
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-    QMatrix4x4 yawMatrix;
-    QMatrix4x4 pitchMatrix;
-    QMatrix4x4 rollMatrix;
+    glm::mat4x4 yawMatrix;
+    glm::mat4x4 pitchMatrix;
+    glm::mat4x4 rollMatrix;
 
-	QMatrix4x4 viewMatrix;
-	QMatrix4x4 projectionMatrix;
+    glm::mat4x4 viewMatrix;
+    glm::mat4x4 projectionMatrix;
 
     void clamp360(float* variable);
 

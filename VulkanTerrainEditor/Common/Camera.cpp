@@ -18,21 +18,21 @@ void Camera::clamp360(float* variable)
         *variable += 360.0f;
 }
 
-void Camera::move(const QVector3D& pos)
+void Camera::move(const glm::vec3& pos)
 {
 	position = pos;
-	viewCenter = QVector3D(pos.x(), pos.y(), pos.z() - 1.0f);
-	up = QVector3D(0.0f, 1.0f, 0.0f);
+    viewCenter = glm::vec3(pos.x, pos.y, pos.z - 1.0f);
+    up = glm::vec3(0.0f, 1.0f, 0.0f);
 }
 
-void Camera::rotate(const QQuaternion& quaternion)
+void Camera::rotate(const glm::vec3& delta)
 {
-	up = quaternion.rotatedVector(up);
-	toCenter = quaternion.rotatedVector(toCenter);
-	viewCenter = position + toCenter;
+    rotation += glm::vec3(delta.x * rotationSpeed, delta.y * rotationSpeed, 0.0f);
+
+    updateViewMatrix();
 }
 
-void Camera::yaw(const float& angle)
+/*void Camera::yaw(const float& angle)
 {
     rotation[0] += angle;
 
@@ -41,7 +41,7 @@ void Camera::yaw(const float& angle)
     yawMatrix.setToIdentity();
     yawMatrix.rotate(rotation[0], 0, 1, 0);
 
-    QMatrix4x4 rotationMatrix = pitchMatrix * yawMatrix;
+    glm::mat4x4 rotationMatrix = pitchMatrix * yawMatrix;
 
     toCenter = (QVector4D(0.0f, 0.0f, -1.0f, 0.0f) * rotationMatrix).toVector3D();
     viewCenter = (QVector4D(1.0f, 0.0f, 0.0f, 0.0f) * rotationMatrix).toVector3D();
@@ -58,7 +58,7 @@ void Camera::pitch(const float& angle)
     pitchMatrix.setToIdentity();
     pitchMatrix.rotate(rotation[1], 1, 0, 0);
 
-    QMatrix4x4 rotationMatrix = pitchMatrix * yawMatrix;
+    glm::mat4x4 rotationMatrix = pitchMatrix * yawMatrix;
 
     toCenter = (QVector4D(0.0f, 0.0f, -1.0f, 0.0f) * rotationMatrix).toVector3D();
     viewCenter = (QVector4D(0.0f, 1.0f, 0.0f, 0.0f) * rotationMatrix).toVector3D();
@@ -75,13 +75,13 @@ void Camera::roll(const float& angle)
     rollMatrix.setToIdentity();
     rollMatrix.rotate(rotation[2], 0, 0, 1);
 
-    QMatrix4x4 rotationMatrix = pitchMatrix * yawMatrix;
+    glm::mat4x4 rotationMatrix = pitchMatrix * yawMatrix;
 
     toCenter = (QVector4D(0.0f, 0.0f, -1.0f, 0.0f) * rotationMatrix).toVector3D();
     viewCenter = (QVector4D(0.0f, 0.0f, 1.0f, 0.0f) * rotationMatrix).toVector3D();
 
     updateViewMatrix();
-}
+}*/
 
 void Camera::setNearPlane(const float& value)
 {
@@ -123,18 +123,17 @@ void Camera::setAspectRatio(const float& value)
     updateProjectionMatrix();
 }
 
-void Camera::setPerspectiveProjection(const QMatrix4x4& clipCorrectionMatrix, const float& FOV, const float& AR, const float& nPlane, const float& fPlane)
+void Camera::setPerspectiveProjection(const float& FOV, const float& AR, const float& nPlane, const float& fPlane)
 {
 	fieldOfView = FOV;
 	aspectRatio = AR;
 	nearPlane = nPlane;
     farPlane = fPlane;
 
-    projectionMatrix = clipCorrectionMatrix;
-    projectionMatrix.perspective(fieldOfView, aspectRatio, nearPlane, farPlane);
+    updateProjectionMatrix();
 }
 
-void Camera::translate(const QVector3D& delta)
+void Camera::translate(const glm::vec3& delta)
 {
 	// Calculate the amount to move by in world coordinates
     /*QVector3D vWorld;
@@ -179,30 +178,47 @@ void Camera::translate(const QVector3D& delta)
 
 void Camera::strafe(const float& amount)
 {
-    position[0] += amount * viewCenter.x();
-    position[2] += amount * viewCenter.z();
+    glm::vec3 camFront;
+    camFront.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
+    camFront.y = sin(glm::radians(rotation.x));
+    camFront.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
+    camFront = glm::normalize(camFront);
+
+    float moveSpeed = amount * movementSpeed;
+
+    position += glm::normalize(glm::cross(camFront, glm::vec3(0.0f, 1.0f, 0.0f))) * moveSpeed;
 
     updateViewMatrix();
 }
 
 void Camera::walk(const float& amount)
 {
-    position[0] += amount * toCenter.x();
-    position[2] += amount * toCenter.z();
+    glm::vec3 camFront;
+    camFront.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
+    camFront.y = sin(glm::radians(rotation.x));
+    camFront.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
+    camFront = glm::normalize(camFront);
+
+    float moveSpeed = amount * movementSpeed;
+
+    position += camFront * moveSpeed;
 
     updateViewMatrix();
 }
 
 void Camera::updateProjectionMatrix()
 {
-	projectionMatrix.setToIdentity();
-	projectionMatrix.perspective(fieldOfView, aspectRatio, nearPlane, farPlane);
+    projectionMatrix = glm::perspective(fieldOfView, aspectRatio, nearPlane, farPlane);
 }
 
 void Camera::updateViewMatrix()
 {
-    QMatrix4x4 matrix = pitchMatrix * yawMatrix;
-    matrix.translate(-position);
+    glm::mat4x4 rotationMatrix = glm::mat4x4(1.0f);
+    glm::mat4x4 translationMatrix = glm::translate(glm::mat4x4(1.0f), position);
 
-    viewMatrix = matrix;
+    rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    rotationMatrix = glm::rotate(rotationMatrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    viewMatrix = rotationMatrix * translationMatrix;//translationMatrix * rotationMatrix;
 }
