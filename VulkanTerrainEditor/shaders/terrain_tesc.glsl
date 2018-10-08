@@ -67,7 +67,7 @@ bool frustumCheck()
     const float radius = 8.0f;
 
     vec4 pos = gl_in[gl_InvocationID].gl_Position;
-    pos.y -= textureLod(samplerHeight, inUV[0], 0.0).r * ubo.displacementFactor;
+    pos.y -= textureLod(samplerHeight, UV[0], 0.0).r * ubo.displacementFactor;
 
     // Check sphere against frustum planes
     for (int i = 0; i < 6; i++)
