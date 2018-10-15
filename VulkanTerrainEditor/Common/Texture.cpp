@@ -88,7 +88,7 @@ bool Texture2D::loadFromFile(const QString& filename, VkFormat format, VkImageUs
 
         memoryAllocateInfo.allocationSize = memoryRequirements.size;
         // Get memory type index for a host visible buffer
-        memoryAllocateInfo.memoryTypeIndex = vkManager->getMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);;
+        memoryAllocateInfo.memoryTypeIndex = vkManager->getMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
         VK_CHECK_RESULT(deviceFuncs->vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &stagingMemory));
         VK_CHECK_RESULT(deviceFuncs->vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0));
@@ -305,10 +305,6 @@ bool Texture2D::fromBuffer(void* buffer, VkDeviceSize bufferSize, VkFormat vkFor
 
     VkDevice device = vkManager->device;
     QVulkanDeviceFunctions* deviceFuncs = vkManager->deviceFuncs;
-
-    const uint32_t hostVisibleMemoryIndex = vkManager->hostVisibleMemoryIndex;
-    const uint32_t deviceLocalMemoryIndex = vkManager->deviceLocalMemoryIndex;
-
     format = vkFormat;
 
     width = size.width();
@@ -334,7 +330,7 @@ bool Texture2D::fromBuffer(void* buffer, VkDeviceSize bufferSize, VkFormat vkFor
 
     VkMemoryAllocateInfo memoryAllocateInfo = Vulkan::Initializers::memoryAllocateInfo();
     memoryAllocateInfo.allocationSize = memoryRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = hostVisibleMemoryIndex;
+    memoryAllocateInfo.memoryTypeIndex = vkManager->getMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     VK_CHECK_RESULT(deviceFuncs->vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &stagingMemory));
     VK_CHECK_RESULT(deviceFuncs->vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0));
@@ -379,7 +375,7 @@ bool Texture2D::fromBuffer(void* buffer, VkDeviceSize bufferSize, VkFormat vkFor
     deviceFuncs->vkGetImageMemoryRequirements(device, image, &memoryRequirements);
 
     memoryAllocateInfo.allocationSize = memoryRequirements.size;
-    memoryAllocateInfo.memoryTypeIndex = deviceLocalMemoryIndex;
+    memoryAllocateInfo.memoryTypeIndex = vkManager->getMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);;
 
     VK_CHECK_RESULT(deviceFuncs->vkAllocateMemory(device, &memoryAllocateInfo, nullptr, &deviceMemory));
     VK_CHECK_RESULT(deviceFuncs->vkBindImageMemory(device, image, deviceMemory, 0));
@@ -391,7 +387,7 @@ bool Texture2D::fromBuffer(void* buffer, VkDeviceSize bufferSize, VkFormat vkFor
     subresourceRange.layerCount = 1;
 
     // Use a separate command buffer for texture loading
-    VkCommandBuffer commandBuffer = vkManager->getCommandBuffer();
+    VkCommandBuffer commandBuffer = vkManager->createCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true, true);
 
     // Image barrier for optimal image (target)
     // Optimal image will be used as destination for the copy
@@ -420,6 +416,8 @@ bool Texture2D::fromBuffer(void* buffer, VkDeviceSize bufferSize, VkFormat vkFor
     imageMemoryBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
     deviceFuncs->vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+    vkManager->flushCommandBuffer(commandBuffer, true);
 
     // Clean up staging resources
     deviceFuncs->vkFreeMemory(device, stagingMemory, nullptr);
