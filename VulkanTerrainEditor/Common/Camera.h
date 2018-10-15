@@ -57,12 +57,12 @@ private:
 	float fieldOfView = 60.0f;
 	float aspectRatio = 1.0f;
 
-    glm::vec3 rotation = glm::vec3(); // x = yaw, y = pitch, z = roll
+    glm::vec3 rotation = glm::vec3(-12.0f, 159.0f, 0.0f); // x = yaw, y = pitch, z = roll
 
 	float movementSpeed = 1.0f;
 	float rotationSpeed = 1.0f;
 
-    glm::vec3 position = glm::vec3(0.0f, 0.0f, 20.0f);
+    glm::vec3 position = glm::vec3(18.0f, 22.5f, 57.5f);
     glm::vec3 viewCenter = glm::vec3(1.0f, 0.0f, 0.0f); // right
     glm::vec3 toCenter = glm::vec3(0.0f, 0.0f, -1.0f); // forward
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
