@@ -29,6 +29,8 @@ namespace Vulkan
 
 		QString errorString(VkResult errorCode); // Returns an error code as a string
 		QString physicalDeviceTypeString(VkPhysicalDeviceType type); // Returns the device type as a string
+
+        VkBool32 getSupportedDepthFormat(VkFormat* depthFormat);
 		
 		VkShaderModule loadShader(const QString& fileName, VkDevice device, QVulkanDeviceFunctions* functions); // Load a SPIR-V shader (binary)
 		VkShaderModule loadShaderGLSL(const QString& fileName, VkDevice device, QVulkanDeviceFunctions* functions, VkShaderStageFlagBits stage); // Note: GLSL support requires vendor-specific extensions to be enabled and is not a core-feature of Vulkan
