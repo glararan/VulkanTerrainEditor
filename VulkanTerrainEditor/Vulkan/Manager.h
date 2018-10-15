@@ -4,13 +4,16 @@
 #include <cstdint>
 
 #include <QVulkanFunctions>
+#include <QVector>
+#include <QSize>
 
 #include "Buffer.h"
 
 #include "Common/Singleton/Singleton.h"
-#include "Editor/MapView.h"
 
 #define VulkanManager Vulkan::Manager::getInstance()
+
+class VulkanWindow;
 
 namespace Vulkan
 {
@@ -19,7 +22,7 @@ namespace Vulkan
     public:
         static Manager* getInstance();
 
-        void initialize(MapView* mapView, VkPipelineCache vkPipelineCache);
+        void initialize(VulkanWindow* vulkanWindow);
 
 		VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data = nullptr);
 		VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Vulkan::Buffer* buffer, VkDeviceSize size, void* data = nullptr);
@@ -28,9 +31,9 @@ namespace Vulkan
 
 		void flushCommandBuffer(VkCommandBuffer commandBuffer, bool free);
 
-		VkCommandBuffer getCommandBuffer() const { return mapView->currentCommandBuffer(); }
-		uint32_t getMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr);
-        VkSampleCountFlagBits getSampleCountFlagBits() const { return mapView->sampleCountFlagBits(); }
+        uint32_t getMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr);
+
+        VulkanWindow* getWindow() { return window; }
 
 		VkPipelineShaderStageCreateInfo loadShader(VkShaderModule& shader, VkShaderStageFlagBits stage);
 
@@ -41,20 +44,34 @@ namespace Vulkan
 		VkRenderPass renderPass;
 		VkPhysicalDeviceMemoryProperties memoryProperties;
         VkPipelineCache pipelineCache;
+        VkCommandPool commandPool;
+
+        VkClearColorValue defaultClearColor = { { 0.67f, 0.84f, 0.9f, 1.0f } };
+
+        struct
+        {
+            uint32_t graphics;
+            uint32_t compute;
+            uint32_t transfer;
+        } queueFamilyIndices;
 
 		QVulkanInstance* instance;
 		QVulkanFunctions* functions;
-		QVulkanDeviceFunctions* deviceFuncs;
-
-        uint32_t hostVisibleMemoryIndex;
-        uint32_t deviceLocalMemoryIndex;
+        QVulkanDeviceFunctions* deviceFuncs;
 
         QSize viewportSize;
 
-	private:
+    private:
+        VkResult createLogicalDevice(bool useSwapChain = true, VkQueueFlags requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
+        VkCommandPool createCommandPool(uint32_t queueFamilyIndex, VkCommandPoolCreateFlags createFlags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+        uint32_t getQueueFamilyIndex(VkQueueFlagBits queueFlags);
+
+        QVector<VkQueueFamilyProperties> queueFamilyProperties;
+
         static Manager* createInstance();
 
-		MapView* mapView;
+        VulkanWindow* window;
 	};
 }
 

@@ -1,10 +1,9 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include "MapViewRenderer.h"
-
 #include "Terrain/MapTile.h"
 
+#include "Common/Camera.h"
 #include "Common/Frustum.h"
 
 #include "Vulkan/Manager.h"
@@ -16,6 +15,8 @@ class World
 public:
 	World();
 	~World();
+
+    void buildCommandBuffers();
 
     void create();
     void destroy();

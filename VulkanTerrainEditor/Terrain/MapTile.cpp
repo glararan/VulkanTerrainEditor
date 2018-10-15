@@ -1,5 +1,7 @@
 #include "MapTile.h"
 
+#include "VulkanWindow.h"
+
 #include "Vulkan/Initializers.h"
 #include "Vulkan/Tools.h"
 
@@ -13,6 +15,63 @@ MapTile::MapTile()
 
 MapTile::~MapTile()
 {
+}
+
+void MapTile::buildCommandBuffers()
+{
+    Vulkan::Manager* vkManager = VulkanManager;
+
+    VulkanWindow* window = vkManager->getWindow();
+
+    QVulkanDeviceFunctions* functions = vkManager->deviceFuncs;
+
+    VkCommandBufferBeginInfo cmdBufInfo = Vulkan::Initializers::commandBufferBeginInfo();
+
+    VkClearValue clearValues[2];
+    clearValues[0].color = vkManager->defaultClearColor;
+    clearValues[1].depthStencil = { 1.0f, 0 };
+
+    VkRenderPassBeginInfo renderPassBeginInfo = Vulkan::Initializers::renderPassBeginInfo();
+    renderPassBeginInfo.renderPass = window->getRenderPass();
+    renderPassBeginInfo.renderArea.offset.x = 0;
+    renderPassBeginInfo.renderArea.offset.y = 0;
+    renderPassBeginInfo.renderArea.extent.width = static_cast<uint32_t>(window->width());
+    renderPassBeginInfo.renderArea.extent.height = static_cast<uint32_t>(window->height());
+    renderPassBeginInfo.clearValueCount = 2;
+    renderPassBeginInfo.pClearValues = clearValues;
+
+    QVector<VkCommandBuffer> commandBuffers = window->getCommandBuffers();
+    QVector<VkFramebuffer> frameBuffers = window->getFrameBuffers();
+
+    for (auto commandBuffer : commandBuffers)
+    {
+        renderPassBeginInfo.framebuffer = frameBuffers[commandBuffers.indexOf(commandBuffer)];
+
+        VK_CHECK_RESULT(functions->vkBeginCommandBuffer(commandBuffer, &cmdBufInfo));
+
+        functions->vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        VkViewport viewport = Vulkan::Initializers::viewport((float)window->width(), (float)window->height(), 0.0f, 1.0f);
+        functions->vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+        VkRect2D scissor = Vulkan::Initializers::rect2D(window->width(), window->height(), 0, 0);
+        functions->vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+        functions->vkCmdSetLineWidth(commandBuffer, 1.0f);
+
+        VkDeviceSize offsets[1] = { 0 };
+
+        // Render
+        functions->vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        functions->vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
+        functions->vkCmdBindVertexBuffers(commandBuffer, VERTEX_BUFFER_BIND_ID, 1, &model.vertices.buffer, offsets);
+        functions->vkCmdBindIndexBuffer(commandBuffer, model.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+        functions->vkCmdDrawIndexed(commandBuffer, model.indexCount, 1, 0, 0, 0);
+
+        functions->vkCmdEndRenderPass(commandBuffer);
+
+        VK_CHECK_RESULT(functions->vkEndCommandBuffer(commandBuffer));
+    }
 }
 
 void MapTile::create()
@@ -89,6 +148,8 @@ void MapTile::create()
     createPipeline(manager);
     createDescriptorPool(manager);
     createDescriptorSets(manager);
+
+    buildCommandBuffers();
 }
 
 void MapTile::createDescriptorPool(Vulkan::Manager* vkManager)
@@ -181,8 +242,8 @@ void MapTile::createPipeline(Vulkan::Manager* vkManager)
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertexInputState = Vulkan::Initializers::pipelineVertexInputStateCreateInfo();
-    vertexInputState.flags = 0;
-    vertexInputState.pNext = nullptr;
+    ///vertexInputState.flags = 0;
+    ///vertexInputState.pNext = nullptr;
     vertexInputState.vertexBindingDescriptionCount = ARRAY_LENGTH(vertexInputBindings);
     vertexInputState.pVertexBindingDescriptions = vertexInputBindings;
     vertexInputState.vertexAttributeDescriptionCount = ARRAY_LENGTH(vertexInputAttributes);
@@ -249,7 +310,7 @@ void MapTile::createVertexBuffers(Vulkan::Manager* vkManager)
 
 	Vertex* vertices = new Vertex[vertexCount];
 
-    Heightmap heightmap(QCoreApplication::applicationDirPath() + "/heightmap.ktx", PATCH_SIZE);
+    heightmap = new Heightmap(QCoreApplication::applicationDirPath() + "/heightmap.ktx", PATCH_SIZE);
 
 	const float wx = 2.0f;
 	const float wy = 2.0f;
@@ -269,7 +330,7 @@ void MapTile::createVertexBuffers(Vulkan::Manager* vkManager)
             for(auto hx = -1; hx <= 1; ++hx)
             {
                 for(auto hy = -1; hy <= 1; ++hy)
-                    heights[hx + 1][hy + 1] = heightmap.getHeight(x + hx, y + hy);
+                    heights[hx + 1][hy + 1] = heightmap->getHeight(qMax(0, qMin(PATCH_SIZE - 1, x + hx)), qMax(0, qMin(PATCH_SIZE - 1, y + hy)));
             }
 
             // Calculate normal
@@ -386,6 +447,13 @@ void MapTile::destroy()
 
 		descriptorSetLayout = VK_NULL_HANDLE;
 	}
+
+    if(heightmap)
+    {
+        delete heightmap;
+
+        heightmap = Q_NULLPTR;
+    }
 }
 
 void MapTile::draw(const Camera& camera, const Frustum& frustum, const bool& wireframe, const bool& tessellation)
@@ -399,19 +467,7 @@ void MapTile::draw(const Camera& camera, const Frustum& frustum, const bool& wir
 	//if (!frustum.check())
 		//return;
 
-    VkCommandBuffer commandBuffer = VulkanManager->getCommandBuffer();
-
-    QVulkanDeviceFunctions* deviceFuncs = VulkanManager->deviceFuncs;
-
     updateUniformBuffers(camera, frustum);
-
-    VkDeviceSize offset = 0;
-
-    deviceFuncs->vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-    deviceFuncs->vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSet, 0, NULL);
-    deviceFuncs->vkCmdBindVertexBuffers(commandBuffer, VERTEX_BUFFER_BIND_ID, 1, &model.vertices.buffer, &offset);
-    deviceFuncs->vkCmdBindIndexBuffer(commandBuffer, model.indices.buffer, 0, VK_INDEX_TYPE_UINT32);
-    deviceFuncs->vkCmdDrawIndexed(commandBuffer, model.indexCount, 1, 0, 0, 0);
 }
 
 void MapTile::updateUniformBuffers(const Camera& camera, Frustum frustum)

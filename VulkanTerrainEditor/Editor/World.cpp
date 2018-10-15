@@ -8,6 +8,15 @@ World::~World()
 {
 }
 
+void World::buildCommandBuffers()
+{
+    for (int x = 0; x < TILES; ++x)
+    {
+        for (int y = 0; y < TILES; ++y)
+            tiles[x][y].buildCommandBuffers();
+    }
+}
+
 void World::create()
 {
 	for (int x = 0; x < TILES; ++x)

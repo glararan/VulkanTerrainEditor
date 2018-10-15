@@ -1,6 +1,6 @@
 #include "MapView.h"
 
-#include "MapViewRenderer.h"
+#include "World.h"
 
 #include "Vulkan/Tools.h"
 
@@ -8,19 +8,28 @@
 #include <QFile>
 #include <QMouseEvent>
 
-MapView::MapView()
+MapView::MapView(QVulkanInstance* vulkanInstance) : VulkanWindow(vulkanInstance), world(new World())
 {
+    camera.setMovementSpeed(7.5f);
 }
 
 MapView::~MapView()
 {
+    delete world;
 }
 
-QVulkanWindowRenderer* MapView::createRenderer()
+void MapView::initializeResources()
 {
-	renderer = new MapViewRenderer(this, true);
+    camera.setPerspectiveProjection(45.0f, (float)width() / (float)height(), 0.1f, 512.0f);
 
-	return renderer;
+    world->create();
+}
+
+void MapView::releaseResources()
+{
+    world->destroy();
+
+    VulkanWindow::releaseResources();
 }
 
 void MapView::mousePressEvent(QMouseEvent* event)
@@ -44,7 +53,7 @@ void MapView::mouseMoveEvent(QMouseEvent* event)
 	int dy = event->pos().y() - lastMousePosition.y();
 
     if(dx || dy)
-        renderer->getCamera()->rotate(glm::vec3(dy, -dx, 0.0f));
+        camera.rotate(glm::vec3(-dy, dx, 0.0f));
 
     emit cameraChanged();
 
@@ -58,26 +67,47 @@ void MapView::keyPressEvent(QKeyEvent* event)
 	switch (event->key())
 	{
 	case Qt::Key_W:
-        renderer->getCamera()->walk(amount);
+        camera.walk(amount);
         emit cameraChanged();
 		break;
 
 	case Qt::Key_S:
-        renderer->getCamera()->walk(-amount);
+        camera.walk(-amount);
         emit cameraChanged();
 		break;
 
 	case Qt::Key_A:
-        renderer->getCamera()->strafe(-amount);
+        camera.strafe(-amount);
         emit cameraChanged();
 		break;
 
 	case Qt::Key_D:
-        renderer->getCamera()->strafe(amount);
+        camera.strafe(amount);
         emit cameraChanged();
 		break;
 
 	default:
 		break;
 	}
+}
+
+void MapView::buildCommandBuffers()
+{
+    world->buildCommandBuffers();
+}
+
+void MapView::render()
+{
+    VulkanWindow::prepareFrame();
+
+    world->draw(camera);
+
+    // Command buffer to be sumitted to the queue
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &drawCmdBuffers[currentBuffer];
+
+    // Submit to queue
+    VK_CHECK_RESULT(vkDevFunctions->vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE));
+
+    VulkanWindow::submitFrame();
 }
