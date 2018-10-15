@@ -5,7 +5,6 @@
 #include <QVulkanInstance>
 
 #include "MainWindow.h"
-#include "VulkanWindow.h"
 
 class Application : public QApplication
 {
@@ -18,8 +17,7 @@ public:
 	QVulkanInstance* getVkInstance() const { return vulkanInstance; }
 
 private:
-	MainWindow* mainWindow = Q_NULLPTR;
-	VulkanWindow* vulkanWindow = Q_NULLPTR;
+    MainWindow* mainWindow = Q_NULLPTR;
 
 	QVulkanInstance* vulkanInstance = Q_NULLPTR;
 };

@@ -29,20 +29,12 @@ Application::Application(int& argc, char** arg) : QApplication(argc, arg)
 		qFatal("Failed to create Vulkan instance: %d", vulkanInstance->errorCode());
 
     mainWindow = new MainWindow(vulkanInstance);
-	mainWindow->show();
-
-//	vulkanWindow = new VulkanWindow();
-//	vulkanWindow->setVulkanInstance(vulkanInstance);
-//	vulkanWindow->show();
+    mainWindow->show();
 }
 
 Application::~Application()
 {
-	delete mainWindow;
-
-//	vulkanWindow->destroy();
-
-    //delete vulkanWindow;
+    delete mainWindow;
 
 	vulkanInstance->destroy();
 
