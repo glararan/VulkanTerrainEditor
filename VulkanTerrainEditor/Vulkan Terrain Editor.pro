@@ -18,7 +18,14 @@ INSTALLS += target
 include(Vulkan Terrain Editor.pri)
 
 HEADERS += \
-    Common/Shader.h
+    Common/Shader.h \
+    Glm.h \
+    Common/STL/STL.h \
+    Terrain/Heightmap.h \
+    Vulkan/SwapChain.h
 
 SOURCES += \
-    Common/Shader.cpp
+    Common/Shader.cpp \
+    Common/STL/STL.cpp \
+    Terrain/Heightmap.cpp \
+    Vulkan/SwapChain.cpp

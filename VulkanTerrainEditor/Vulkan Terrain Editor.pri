@@ -21,7 +21,6 @@ HEADERS += ./Common/Camera.h \
     $$PWD/Terrain/MapChunk.h \
     $$PWD/Common/Frustum.h \
     $$PWD/Vulkan/Buffer.h \
-    $$PWD/Editor/MapViewRenderer.h \
     $$PWD/Vulkan/Manager.h \
     $$PWD/Vulkan/Model.h \
     $$PWD/Common/Singleton/CallOnce.h \
@@ -38,7 +37,6 @@ SOURCES += ./main.cpp \
     ./Vulkan/Tools.cpp \
     $$PWD/Terrain/MapChunk.cpp \
     $$PWD/Common/Frustum.cpp \
-    $$PWD/Editor/MapViewRenderer.cpp \
     $$PWD/Vulkan/Manager.cpp \
     $$PWD/Vulkan/Model.cpp
 FORMS += ./MainWindow.ui
